@@ -20,5 +20,5 @@ def net2RGB(L,ab):
     ab = 254 * ab.numpy() - 127     # Converting to numpy and unnormalize
     ab = np.transpose(ab,(1,2,0))   # Tranposing axis from Height * Width * Channels to H * W * C
 
-    img = np.dstack(L,ab).astype('float64')
+    img = np.dstack((L,ab)).astype(np.float64)
     return color.lab2rgb(img)
