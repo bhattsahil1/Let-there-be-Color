@@ -1,3 +1,4 @@
+import cv2
 import os
 import torch
 import numpy as np
@@ -7,6 +8,7 @@ from skimage import color, io
 from random import randint
 
 
+
 class HandleGrayscale(object):  ## Converts any grayscale input to rgb
     def __call__(self, image):
         if len(image.shape) < 3:
@@ -14,7 +16,7 @@ class HandleGrayscale(object):  ## Converts any grayscale input to rgb
         return image
 
 
-class RandomCrop(object):   ##  Randomly crops an image to size x size
+class RandomResize(object):   ##  Randomly resize an image to size x size
     def __init__(self, size=224):
         self.size = size
         
@@ -22,14 +24,10 @@ class RandomCrop(object):   ##  Randomly crops an image to size x size
 
         h, w, _ = image.shape
         assert min(h, w) >= self.size
+        resized = cv2.resize(image, (self.size, self.size))
 
-        off_h = randint(0, h - self.size)
-        off_w = randint(0, w - self.size)
-
-        cropped = image[off_h:off_h+self.size, off_w:off_w+self.size]
-
-        assert cropped.shape == (self.size, self.size, 3)
-        return cropped
+        assert resized.shape == (self.size, self.size, 3)
+        return resized
 
     
 class Rgb2LabNorm(object):
@@ -67,7 +65,7 @@ class ImagesDateset(torchvision.datasets.ImageFolder):
         self.testing = testing
 
         self.composed = torchvision.transforms.Compose(
-            [HandleGrayscale(), RandomCrop(224), Rgb2LabNorm(), 
+            [HandleGrayscale(), RandomResize(224), Rgb2LabNorm(), 
              ToTensor(), SplitLab()]
         )
         
