@@ -12,10 +12,10 @@ import numpy as np
 def colorize(path,model):
     checkpt = torch.load(model,map_location=torch.device("cpu"))
     net_divisor = checkpt['net_divisor']
-    class = checkpt['class']
-    n_class = len(class)
+    classes = checkpt['classes']
+    n_classes = len(classes)
 
-    net = colnet.ColNet(num_class=n_class,net_divisor = net_divisor)
+    net = colnet.ColNet(num_classes=n_classes,net_divisor = net_divisor)
     net.load_state_dict(checkpt['model_state_dict'])
 
     transforms = torchvision.transforms.Compose(
@@ -35,13 +35,14 @@ def colorize(path,model):
     with torch.no_grad():
         ab_out,pred = net(L_tensor)
         img_color = utils.net2RGB(L,ab_out[0])
-        io.imsave("colorized-"+os.path.basename(path))
+        io.imsave("colorized-"+os.path.basename(path),img_color)
 
-        probs = softmax(pred)[0].numpy()
-        probs_class = sorted(zip(probs,class),key=lamda x:x[0],reverse=True)
+        sm = softmax(pred)
+        probs = sm[0].numpy()
+        probs_classes = sorted(zip(probs,classes),key=lamda x:x[0],reverse=True)
 
         print('Predicted labels: \n')
-        for p,c in probs_class[:10]:
+        for p,c in probs_classes[:10]:
             print("{:>7.2f}% \t{}".format(p*100.0, c))
         
 parser = argparse.ArgumentParser(description="A script to colorize a photo")
