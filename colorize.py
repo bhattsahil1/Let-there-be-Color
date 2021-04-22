@@ -5,11 +5,9 @@ from src import colnet, dataset, utils
 
 def getImageTransformed(img_path):
     composed_transforms = torchvision.transforms.Compose(
-            [dataset.HandleGrayscale(), 
-             dataset.RandomCrop(224),
-             dataset.Rgb2LabNorm(), 
-             dataset.ToTensor(), 
-             dataset.SplitLab()]
+            [dataset.getGrayscale(), 
+             dataset.GetLabNorm(224),
+             dataset.SplitTheLab()]
         )  
     L, _ = composed_transforms(io.imread(img_path))
     L_tensor = torch.from_numpy(np.expand_dims(L, axis=0))
