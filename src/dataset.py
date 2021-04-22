@@ -1,85 +1,56 @@
-import cv2
-import os
-import torch
+import cv2, os
+import torch, torchvision.datasets, torchvision.transforms
 import numpy as np
-import torchvision.datasets
-import torchvision.transforms
 from skimage import color, io
 from random import randint
 
 
 
-class HandleGrayscale(object):  ## Converts any grayscale input to rgb
-    def __call__(self, image):
-        if len(image.shape) < 3:
-            image = color.gray2rgb(image)
-        return image
+class getGrayscale(object):  ## Converts any grayscale input to rgb
+    def __call__(self, img):
+        if len(img.shape) < 3:
+            img = color.gray2rgb(img)
+        return img
 
 
-class RandomResize(object):   ##  Randomly resize an image to size x size
+class GetLabNorm(object):   ##  Resize the image and convert the image to Lab Norm 
     def __init__(self, size=224):
-        self.size = size
-        
-    def __call__(self, image):
-
-        h, w, _ = image.shape
+        self.size = size        
+    def __call__(self, img):
+        h, w, c = img.shape
+        t = img
         assert min(h, w) >= self.size
-        resized = cv2.resize(image, (self.size, self.size))
-
+        resized = cv2.resize(img, (self.size, self.size))
         assert resized.shape == (self.size, self.size, 3)
-        return resized
-
-    
-class Rgb2LabNorm(object):
-    def __call__(self, image):
-        assert image.shape == (224, 224, 3)
-        img_lab = color.rgb2lab(image)
-        img_lab[:,:,:1] = img_lab[:,:,:1] / 100.0
-        img_lab[:,:,1:] = (img_lab[:,:,1:] + 128.0) / 256.0
+        img_lab = color.rgb2lab(resized)
+        img_lab[:,:,:1], img_lab[:,:,1:] = img_lab[:,:,:1] / 100.0, (img_lab[:,:,1:] + 128.0) / 256.0
         return img_lab
     
-    
-class ToTensor(object):  ##     """Converts an image to torch.Tensor, image -> H*W*C to C*H*W
-    def __call__(self, image):
-        
-        assert image.shape == (224, 224, 3)
-        image_tensor = torch.from_numpy(np.transpose(image, (2, 0, 1)).astype(np.float32))
-        assert image_tensor.shape == (3, 224, 224)
-        return image_tensor
-
-    
-class SplitLab(object): ## Splits tensor LAB image to L and ab channels.
-    def __call__(self, image):
-        assert image.shape == (3, 224, 224)
-        L  = image[:1,:,:]
-        ab = image[1:,:,:]
+class SplitTheLab(object):     ##  Converts an image to torch.Tensor, image -> H*W*C to C*H*W and split the image to L and ab
+    def __call__(self, img):    
+        assert img.shape == (224, 224, 3)
+        tensor_img = torch.from_numpy(np.transpose(img, (2, 0, 1)).astype(np.float32))
+        assert tensor_img.shape == (3, 224, 224)
+        L, ab  = tensor_img[:1,:,:], tensor_img[1:,:,:]
         return (L, ab)
     
-    
-    
 class ImagesDateset(torchvision.datasets.ImageFolder):
-
     def __init__(self, root, testing=False):
-        super().__init__(root=root, loader=io.imread)
-        
+        super().__init__(root=root, loader=io.imread)  
+        self.composed = torchvision.transforms.Compose([getGrayscale(), 
+                                    GetLabNorm(224), SplitTheLab()])  
         self.testing = testing
 
-        self.composed = torchvision.transforms.Compose(
-            [HandleGrayscale(), RandomResize(224), Rgb2LabNorm(), 
-             ToTensor(), SplitLab()]
-        )
-        
-            
-        
+              
     def __getitem__(self, idx):
-        image, label =  super().__getitem__(idx)
-        
-        L, ab = self.composed(image)
+        img, label =  super().__getitem__(idx)
+        L, ab = self.composed(img)
 
         if self.testing:
-            path = os.path.normpath(self.imgs[idx][0])
+            path_name = self.imgs[idx][0]
+            path = os.path.normpath(path_name)
             name = os.path.basename(path)
-            l1 = os.path.basename(os.path.dirname(path))
-            label = l1 + "-" + name
+            temp = os.path.basename(os.path.dirname(path))
+            label = temp + "-" + name
 
         return L, ab, label
