@@ -14,7 +14,10 @@ def getImageTransformed(img_path):
     return L, L_tensor
 
 def main(img_path, model):
-    device_name = torch.device("cpu")
+    if torch.cuda.is_available():
+        device_name = torch.device("cuda")
+    else:
+        device_name = torch.device("cpu")
     ## load the checkpoint
     checkpoint = torch.load(model, map_location=device_name)
     classes = checkpoint['classes']
