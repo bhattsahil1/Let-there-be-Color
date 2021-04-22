@@ -59,9 +59,11 @@ class GlobalFeatures(nn.Module):
         y = F.relu(self.conv4(y))
         y = y.view(-1, 7*7*512)
         y = F.relu(self.fc1(y))
-        y = F.relu(self.fc2(y))        
-        out = F.relu(self.fc3(y))
-        return out
+        y = F.relu(self.fc2(y)) 
+        out = y
+        classification_in = y       
+        out = F.relu(self.fc3(out))
+        return out, classification_in
 
 class ColorizationNetwork(nn.Module):
     def __init__(self):
@@ -94,6 +96,18 @@ class ColorizationNetwork(nn.Module):
         
         return out
 
+class ClassNet(nn.Module):
+
+    def __init__(self, num_classes):
+        super(ClassNet, self).__init__()
+        
+        self.num_classes = num_classes
+        self.fc1 = nn.Linear(512, 256)
+        self.fc2 = nn.Linear(256, num_classes)
+    def forward(self, x):
+        out = F.relu(self.fc1(x))
+        out = self.fc2(out)
+        return out
 
 class ColNet(nn.Module):
     def __init__(self, num_classes):
@@ -103,6 +117,7 @@ class ColNet(nn.Module):
         self.mid = MidLevelFeatures()
         self.glob = GlobalFeatures()
         self.col = ColorizationNetwork()
+        self.classifier= ClassNet(num_classes)
 
 
     def fusion_layer(self, mid_out, glob_out):
@@ -120,12 +135,13 @@ class ColNet(nn.Module):
 
 
     def forward(self, x):
-        low_out = self.low(x)                               #Low-level features
-        mid_out = low_out                                   #Sharing weights with mid level
-        glob_out = low_out                                  #Sharing weights with global features
-        mid_out = self.mid(mid_out)                         #Mid-level features
-        glob_out = self.glob(glob_out)                      #Global features
-        out = self.fusion_layer(mid_out, glob_out)          #Fusion layer
-        out = self.col(out)                                 #Colorization network                
-        return out
+        low_out = self.low(x)                                   #Low-level features
+        mid_out = low_out                                       #Sharing weights with mid level
+        glob_out = low_out                                      #Sharing weights with global features
+        mid_out = self.mid(mid_out)                             #Mid-level features
+        glob_out, classification_in = self.glob(glob_out)       #Global features
+        classification_out = self.classifier(classification_in) #Classification layer
+        out = self.fusion_layer(mid_out, glob_out)              #Fusion layer
+        out = self.col(out)                                     #Colorization network                
+        return out, classification_out
         
