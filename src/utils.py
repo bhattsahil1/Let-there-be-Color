@@ -17,7 +17,7 @@ def net2RGB(L,ab):
     L = 100 * L.numpy()             # Converting to numpy and unnormalize
     L = np.transpose(L,(1,2,0))     # Tranposing axis from Height * Width * Channels to H * W * C
     
-    ab = 254 * ab.numpy() - 127     # Converting to numpy and unnormalize
+    ab = 254 * ab.cpu().numpy() - 127     # Converting to numpy and unnormalize
     ab = np.transpose(ab,(1,2,0))   # Tranposing axis from Height * Width * Channels to H * W * C
 
     img = np.dstack((L,ab)).astype(np.float64)

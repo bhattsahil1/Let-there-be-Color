@@ -1,5 +1,6 @@
 import os, sys, argparse, torch, torchvision.transforms
 import numpy as np
+import torch.nn as nn
 from skimage import io, color
 from src import colnet, dataset, utils
 
@@ -21,19 +22,19 @@ def main(img_path, model):
     ## load the checkpoint
     checkpoint = torch.load(model, map_location=device_name)
     classes = checkpoint['classes']
-
+    ##print(checkpoint['model_state_dict'])
     ## get the model saved in colnet
-    net = colnet.ColNet(num_classes=len(classes))
+    net = nn.DataParallel(colnet.ColNet(num_classes=len(classes)))
     net.load_state_dict(checkpoint['model_state_dict'])
     softmax = torch.nn.Softmax(dim=1)
     net.eval()
     L, L_tensor = getImageTransformed(img_path)
     with torch.no_grad():
         ab_out, predicted = net(L_tensor)
-        img_colorized = utils.net_out2rgb(L, ab_out[0])
+        img_colorized = utils.net2RGB(L, ab_out[0])
         ## saving the resultant image 
         io.imsave("result-" + os.path.basename(img_path), img_colorized)
-        probs = softmax(predicted)[0].numpy()
+        probs = softmax(predicted)[0].cpu().numpy()
         probs_and_classes = sorted(zip(probs, classes), key=lambda x: x[0], reverse=True)
         bestResults = probs_and_classes[:10]
         for p, c in bestResults:
