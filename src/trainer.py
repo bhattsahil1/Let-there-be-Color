@@ -8,7 +8,7 @@ from .colnet import ColNet
 from .dataset import ImagesDateset
 import matplotlib.pyplot as plt
 
-class Train:
+class Training:
     def __init__(self,batch_size,epochs,img_dir_train, img_dir_val,img_dir_test,start_epoch=0,learning_rate=0.0001,
         model_checkpoint=None,models_dir='./model/',img_out_dir='./out',num_workers=4):
 
@@ -16,19 +16,10 @@ class Train:
             os.makedirs(models_dir)
         if os.path.exists(img_out_dir) == False:
             os.makedirs(img_out_dir)
-        if model_checkpoint:
-            self.load_checkpoint(model_checkpoint)
-        
-        self.current_model_name = model_checkpoint
-        self.best_val_loss = float("inf")
-        self.best_model_dir = os.path.join(models_dir, 'colnet-the-best.pt')
-        
-        self.classes = self.trainloader.dataset.classes
-        self.num_classes = len(self.classes)
-        self.BATCH_SIZE = batch_size
-        self.EPOCHS = epochs
-        self.start_epoch = start_epoch
+        self.img_out_dir = img_out_dir
+        self.models_dir = models_dir
 
+        self.BATCH_SIZE = batch_size
         self.img_dir_val = img_dir_val    
         self.devset = ImagesDateset(self.img_dir_val)
         self.devloader = DataLoader(self.devset, batch_size=self.BATCH_SIZE,
@@ -43,34 +34,35 @@ class Train:
         self.testloader = DataLoader(self.testset, batch_size=self.BATCH_SIZE,
                                      shuffle=False, num_workers=num_workers)
         
+        self.classes = self.trainloader.dataset.classes
+        self.num_classes = len(self.classes)
+        self.EPOCHS = epochs
+        self.start_epoch = start_epoch
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")        
+        self.net = nn.DataParallel(ColNet(num_classes=self.num_classes))
+        self.net.to(self.device)
+        print("Using {}\n".format(self.device))
+        
         self.loss_history = { "train": [], "val":[] }
         self.mse = nn.MSELoss(reduction='sum')
         self.ce = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.net.parameters(), lr=learning_rate)
-        
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")        
-        self.net = ColNet(num_classes=self.num_classes)
-        self.net.to(self.device)
-        print("Using {}\n".format(self.device))
+
         if model_checkpoint:
             self.load_checkpoint(model_checkpoint)
-        
-        self.current_model_name = model_checkpoint
+        self.current_model_name = model_checkpoint      
         self.best_val_loss = float("inf")
         self.best_model_dir = os.path.join(self.models_dir, 'colnet-the-best.pt')
-        
-        self.img_out_dir = img_out_dir
-        self.models_dir = models_dir
-    
-    def loss(self,class_target,class_out,col_target,col_out):
+            
+    def loss(self,col_target,col_out,class_target,class_out):
         return self.mse(col_target,col_out) + self.ce(class_out,class_target)/300
     
     def train(self,epoch):
         epoch_loss = 0
         self.net.train()
 
-        for idx in range(len(self.trainloader)):
-            L, ab, labels = self.trainloader[idx]
+        for idx, curr_data in enumerate(self.trainloader):
+            L, ab, labels = curr_data
             L = L.to(self.device)
             ab = ab.to(self.device)
             labels = labels.to(self.device)
@@ -91,8 +83,8 @@ class Train:
         dev_loss = 0
         self.net.eval()
         with torch.no_grad():
-            for idx in range(len(self.devloader)):
-                L_dev, ab_dev, labels_dev = self.devloader[idx]
+            for idx, curr_data in enumerate(self.devloader):
+                L_dev, ab_dev, labels_dev = curr_data
                 L_dev = L_dev.to(self.device)
                 ab_dev = ab_dev.to(self.device)
                 labels_dev = labels_dev.to(self.device)
@@ -126,7 +118,7 @@ class Train:
         self.current_model_name = full_path
         print('\nSaved the model to', full_path)
 
-        if (self.loss_history['val'][-1] < self.best_val_loss):
+        if self.loss_history['val'][-1] < self.best_val_loss:
             self.best_val_loss = self.loss_history['val'][-1]
             shutil.copy(full_path, self.best_model_dir)
             print("Saved the best model on epoch: ",epoch+1,"\n")

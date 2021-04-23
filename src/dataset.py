@@ -4,8 +4,6 @@ import numpy as np
 from skimage import color, io
 from random import randint
 
-
-
 class getGrayscale(object):  ## Converts any grayscale input to rgb
     def __call__(self, img):
         if len(img.shape) < 3:

@@ -100,7 +100,6 @@ class ClassNet(nn.Module):
 
     def __init__(self, num_classes):
         super(ClassNet, self).__init__()
-        
         self.num_classes = num_classes
         self.fc1 = nn.Linear(512, 256)
         self.fc2 = nn.Linear(256, num_classes)
