@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from .utils import net2RGB
 from .colnet import ColNet
 from .dataset import ImagesDateset
-
+import matplotlib.pyplot as plt
 
 class Train:
     def __init__(self,batch_size,epochs,img_dir_train, img_dir_val,img_dir_test,start_epoch=0,learning_rate=0.0001,
@@ -140,6 +140,14 @@ class Train:
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.start_epoch = checkpoint['epoch'] + 1 
         
+    def plot_losses(self):
+        print("Plotting the Model training losses")
+        traininglosss = self.loss_history['train']
+        validationloss = self.loss_history['val']
+        trainlossplot = plt.plot(traininglosss)
+        plt.ylabel('Epoch Loss')
+        plt.ylabel('Epoch ')
+        plt.savefig('trainlossplot.png')        
 
     def run(self):
         for epoch in range(self.start_epoch, self.EPOCHS):
