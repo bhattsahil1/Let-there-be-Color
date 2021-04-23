@@ -144,10 +144,14 @@ class Train:
         print("Plotting the Model training losses")
         traininglosss = self.loss_history['train']
         validationloss = self.loss_history['val']
-        trainlossplot = plt.plot(traininglosss)
+        plt.plot(traininglosss)
+        plt.plot(validationloss)
+        
+        plt.legend(["train", "val"], loc ="upper right")
+
         plt.ylabel('Epoch Loss')
-        plt.ylabel('Epoch ')
-        plt.savefig('trainlossplot.png')        
+        plt.xlabel('Epoch ')
+        plt.savefig('lossplot.png')        
 
     def run(self):
         for epoch in range(self.start_epoch, self.EPOCHS):
