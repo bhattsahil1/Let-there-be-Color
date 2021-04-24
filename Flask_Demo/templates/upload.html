@@ -1,0 +1,50 @@
+<!doctype html>
+<title>Python Flask Image Upload and Display Example</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+        $(function() {
+          $('a#test').on('click', function(e) {
+            e.preventDefault()
+            $.getJSON('/background_process_test',
+                function(data) {
+              //do nothing
+            });
+            return false;
+          });
+        });
+</script>
+
+<h1>Let There Be Color !</h1>
+<p>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		<ul>
+		{% for message in messages %}
+		  <li>{{ message }}</li>
+		{% endfor %}
+		</ul>
+	  {% endif %}
+	{% endwith %}
+</p>
+{% if filename %}
+	<div>
+		<img src="{{ url_for('display_image', filename=filename) }}">
+    <!-- <p>The result is <var>filename</var></p> -->
+      
+    <img src="{{ url_for('background_process_test', filename=filename) }}">
+	</div>
+{% endif %}
+<form method="post" action="/" enctype="multipart/form-data">
+    <dl>
+		<p>
+			<input type="file" name="file" autocomplete="off" required>
+		</p>
+    </dl>
+    <p>
+            <input type="submit" value="Submit">
+      </p>
+      <!-- <a href=# id=test><button class='btn btn-default'>Test</button></a>  
+      <div>
+		<img src="{{ url_for('background_process_test', filename=filename) }}">
+	</div> -->
+</form>
