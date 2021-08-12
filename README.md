@@ -1,6 +1,13 @@
 # Gray2Color
 Implementation of [_Let there be Color!_](http://iizuka.cs.tsukuba.ac.jp/projects/colorization/data/colorization_sig2016.pdf)
-by Satoshi Iizuka, Edgar Simo-Serra and Hiroshi Ishikawa.
+by Satoshi Iizuka, Edgar Simo-Serra and Hiroshi Ishikawa.  
+  
+  
+<!-- ![Original Grayscale Image](https://github.com/bhattsahil1/Let-there-be-Color/blob/main/Documents/house.jpg) -->
+
+Original Grayscale Image (any resolution)             |  Colorized Image
+:-------------------------:|:-------------------------:
+![Grayscale Image](https://github.com/bhattsahil1/Let-there-be-Color/blob/main/Documents/house.jpg)  |  ![Colorized Image](https://github.com/bhattsahil1/Let-there-be-Color/blob/main/Documents/result-house.jpg)
 
 ### Dataset download
 [Places365-Standard](http://places2.csail.mit.edu/download.html) 
