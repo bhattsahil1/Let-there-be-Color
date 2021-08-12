@@ -1,3 +1,4 @@
+# Gray2Color
 Implementation of [_Let there be Color!_](http://iizuka.cs.tsukuba.ac.jp/projects/colorization/data/colorization_sig2016.pdf)
 by Satoshi Iizuka, Edgar Simo-Serra and Hiroshi Ishikawa.
 
